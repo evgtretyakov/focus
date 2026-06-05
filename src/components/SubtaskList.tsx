@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Button, Checkbox, Input, List, Space, Typography } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 
 type Subtask = { id: string; title: string; completed: boolean };
 
@@ -24,8 +26,7 @@ export function SubtaskList({
     onUpdate();
   }
 
-  async function addSubtask(e: React.FormEvent) {
-    e.preventDefault();
+  async function addSubtask() {
     if (!newTitle.trim()) return;
     await fetch(`/api/activities/${activityId}/subtasks`, {
       method: "POST",
@@ -44,31 +45,46 @@ export function SubtaskList({
   const done = initial.filter((s) => s.completed).length;
 
   return (
-    <div className="pl-8 py-2 space-y-2 bg-gray-50">
-      <p className="text-xs text-gray-500">{done}/{initial.length} выполнено</p>
-      {initial.map((s) => (
-        <div key={s.id} className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={s.completed}
-            onChange={() => toggle(s.id, s.completed)}
-          />
-          <span className={s.completed ? "line-through text-gray-400" : ""}>
-            {s.title}
-          </span>
-          <button onClick={() => remove(s.id)} className="text-red-400 text-xs ml-auto">
-            ✕
-          </button>
-        </div>
-      ))}
-      <form onSubmit={addSubtask} className="flex gap-2">
-        <input
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          placeholder="+ подзадача..."
-          className="flex-1 border rounded px-2 py-1 text-sm"
-        />
-      </form>
-    </div>
+    <Space direction="vertical" size="small" style={{ width: "100%", padding: "8px 16px 8px 32px" }}>
+      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        {done}/{initial.length} выполнено
+      </Typography.Text>
+      <List
+        size="small"
+        dataSource={initial}
+        locale={{ emptyText: "Нет подзадач" }}
+        renderItem={(s) => (
+          <List.Item
+            actions={[
+              <Button
+                key="delete"
+                type="text"
+                danger
+                size="small"
+                icon={<DeleteOutlined />}
+                onClick={() => remove(s.id)}
+                aria-label="Удалить подзадачу"
+              />,
+            ]}
+          >
+            <Checkbox
+              checked={s.completed}
+              onChange={() => toggle(s.id, s.completed)}
+            >
+              <Typography.Text delete={s.completed} type={s.completed ? "secondary" : undefined}>
+                {s.title}
+              </Typography.Text>
+            </Checkbox>
+          </List.Item>
+        )}
+      />
+      <Input
+        value={newTitle}
+        onChange={(e) => setNewTitle(e.target.value)}
+        onPressEnter={addSubtask}
+        placeholder="+ подзадача..."
+        size="small"
+      />
+    </Space>
   );
 }

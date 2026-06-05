@@ -2,7 +2,19 @@
 
 import { useState } from "react";
 import { Priority } from "@prisma/client";
-import { ActivityRow } from "./ActivityRow";
+import {
+  Button,
+  Collapse,
+  Empty,
+  Grid,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Typography,
+} from "antd";
+import type { TableColumnsType } from "antd";
+import { DeleteOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
 import { PriorityBadge } from "./PriorityBadge";
 import { SubtaskList } from "./SubtaskList";
 
@@ -38,67 +50,15 @@ function sortActivities(activities: Activity[], sortBy: SortKey): Activity[] {
   });
 }
 
-function ActivityCard({
-  activity,
-  onUpdate,
-}: {
-  activity: Activity;
-  onUpdate: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const deadlineDate = activity.deadline ? new Date(activity.deadline) : null;
-  const isOverdue = deadlineDate && deadlineDate < new Date();
+function formatDeadline(deadline: string | null) {
+  if (!deadline) return "—";
+  const date = new Date(deadline);
+  return date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+}
 
-  async function deleteActivity() {
-    if (!confirm("Удалить активность?")) return;
-    await fetch(`/api/activities/${activity.id}`, { method: "DELETE" });
-    onUpdate();
-  }
-
-  return (
-    <div className="border rounded-lg p-4 space-y-2">
-      <div className="flex items-start justify-between gap-2">
-        <button
-          type="button"
-          className="font-medium text-left flex-1"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {activity.title}
-        </button>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={deleteActivity}
-            className="text-red-400 hover:text-red-600 text-sm"
-          >
-            ✕
-          </button>
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="text-gray-400"
-          >
-            {expanded ? "▼" : "▶"}
-          </button>
-        </div>
-      </div>
-      <div className="flex items-center justify-between text-sm">
-        <PriorityBadge priority={activity.priority} />
-        <span className={isOverdue ? "text-red-600 font-medium" : "text-gray-600"}>
-          {deadlineDate
-            ? deadlineDate.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })
-            : "—"}
-        </span>
-      </div>
-      {expanded && (
-        <SubtaskList
-          activityId={activity.id}
-          subtasks={activity.subtasks}
-          onUpdate={onUpdate}
-        />
-      )}
-    </div>
-  );
+function isOverdue(deadline: string | null) {
+  if (!deadline) return false;
+  return new Date(deadline) < new Date();
 }
 
 export function ActivityTable({
@@ -109,53 +69,169 @@ export function ActivityTable({
   onUpdate: () => void;
 }) {
   const [sortBy, setSortBy] = useState<SortKey>("priority");
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+  const screens = Grid.useBreakpoint();
+  const isDesktop = screens.md ?? false;
   const sorted = sortActivities(activities, sortBy);
+
+  async function deleteActivity(id: string) {
+    await fetch(`/api/activities/${id}`, { method: "DELETE" });
+    onUpdate();
+  }
+
+  const columns: TableColumnsType<Activity> = [
+    {
+      title: "Название",
+      dataIndex: "title",
+      key: "title",
+      render: (title: string) => <Typography.Text strong>{title}</Typography.Text>,
+    },
+    {
+      title: "Приоритет",
+      dataIndex: "priority",
+      key: "priority",
+      width: 140,
+      render: (priority: Priority) => <PriorityBadge priority={priority} />,
+    },
+    {
+      title: "Дедлайн",
+      dataIndex: "deadline",
+      key: "deadline",
+      width: 120,
+      render: (deadline: string | null) => (
+        <Typography.Text type={isOverdue(deadline) ? "danger" : "secondary"}>
+          {formatDeadline(deadline)}
+        </Typography.Text>
+      ),
+    },
+    {
+      key: "actions",
+      width: 56,
+      render: (_, record) => (
+        <Popconfirm
+          title="Удалить активность?"
+          onConfirm={() => deleteActivity(record.id)}
+          onPopupClick={(e) => e.stopPropagation()}
+        >
+          <Button
+            type="text"
+            danger
+            size="small"
+            icon={<DeleteOutlined />}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Удалить активность"
+          />
+        </Popconfirm>
+      ),
+    },
+  ];
+
+  const sortControl = (
+    <Space>
+      <Typography.Text type="secondary">Сортировка</Typography.Text>
+      <Select
+        value={sortBy}
+        onChange={setSortBy}
+        style={{ minWidth: 180 }}
+        options={[
+          { value: "priority", label: "По приоритету" },
+          { value: "deadline", label: "По дедлайну" },
+          { value: "createdAt", label: "По дате создания" },
+        ]}
+      />
+    </Space>
+  );
+
+  if (sorted.length === 0) {
+    return (
+      <div>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+          {sortControl}
+        </div>
+        <Empty description="Нет активностей" />
+      </div>
+    );
+  }
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <label className="text-sm text-gray-600 flex items-center gap-2">
-          Сортировка
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="border rounded px-2 py-1"
-          >
-            <option value="priority">По приоритету</option>
-            <option value="deadline">По дедлайну</option>
-            <option value="createdAt">По дате создания</option>
-          </select>
-        </label>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+        {sortControl}
       </div>
 
-      {/* Desktop table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b text-left text-sm text-gray-500">
-              <th className="px-4 py-2 font-medium">Название</th>
-              <th className="px-4 py-2 font-medium">Приоритет</th>
-              <th className="px-4 py-2 font-medium">Дедлайн</th>
-              <th className="px-4 py-2 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((activity) => (
-              <ActivityRow key={activity.id} activity={activity} onUpdate={onUpdate} />
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile cards */}
-      <div className="md:hidden space-y-3">
-        {sorted.map((activity) => (
-          <ActivityCard key={activity.id} activity={activity} onUpdate={onUpdate} />
-        ))}
-      </div>
-
-      {sorted.length === 0 && (
-        <p className="text-center text-gray-500 py-8">Нет активностей</p>
+      {isDesktop ? (
+        <Table<Activity>
+          columns={columns}
+          dataSource={sorted}
+          rowKey="id"
+          pagination={false}
+          expandable={{
+            expandedRowKeys: expandedKeys,
+            onExpandedRowsChange: (keys) => setExpandedKeys(keys as string[]),
+            expandRowByClick: true,
+            expandedRowRender: (record) => (
+              <SubtaskList
+                activityId={record.id}
+                subtasks={record.subtasks}
+                onUpdate={onUpdate}
+              />
+            ),
+            expandIcon: ({ expanded, onExpand, record }) => (
+              <Button
+                type="text"
+                size="small"
+                icon={expanded ? <DownOutlined /> : <RightOutlined />}
+                onClick={(e) => onExpand(record, e)}
+              />
+            ),
+          }}
+        />
+      ) : (
+        <Collapse
+          accordion={false}
+          activeKey={expandedKeys}
+          onChange={(keys) => setExpandedKeys(keys as string[])}
+          items={sorted.map((activity) => ({
+            key: activity.id,
+            label: (
+              <Space direction="vertical" size={0} style={{ width: "100%" }}>
+                <Typography.Text strong>{activity.title}</Typography.Text>
+                <Space>
+                  <PriorityBadge priority={activity.priority} />
+                  <Typography.Text
+                    type={isOverdue(activity.deadline) ? "danger" : "secondary"}
+                    style={{ fontSize: 12 }}
+                  >
+                    {formatDeadline(activity.deadline)}
+                  </Typography.Text>
+                </Space>
+              </Space>
+            ),
+            extra: (
+              <Popconfirm
+                title="Удалить активность?"
+                onConfirm={() => deleteActivity(activity.id)}
+                onPopupClick={(e) => e.stopPropagation()}
+              >
+                <Button
+                  type="text"
+                  danger
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label="Удалить активность"
+                />
+              </Popconfirm>
+            ),
+            children: (
+              <SubtaskList
+                activityId={activity.id}
+                subtasks={activity.subtasks}
+                onUpdate={onUpdate}
+              />
+            ),
+          }))}
+        />
       )}
     </div>
   );
