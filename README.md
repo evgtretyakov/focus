@@ -2,7 +2,7 @@
 
 Личный веб-сервис для управления текущими активностями. Доступ с любого устройства через браузер.
 
-**Production:** https://focus.etretyakov.ru (после деплоя)
+**Production:** https://focus.etretyakov.ru
 
 ## Возможности
 
@@ -97,8 +97,13 @@ cp .env.example .env
 # заполнить .env production-значениями:
 # DB_PASSWORD, SESSION_SECRET, OWNER_PASSWORD_HASH
 
+# Вариант A: VPS с Caddy (порты 80/443 свободны)
 docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml exec app npx prisma migrate deploy
+
+# Вариант B: VPS с существующим nginx (как focus.etretyakov.ru)
+docker compose -f docker-compose.prod-nginx.yml up -d --build
+# nginx + certbot настраиваются отдельно (см. deploy/nginx/)
 ```
 
 Caddy автоматически получит TLS-сертификат для `focus.etretyakov.ru`.
@@ -132,5 +137,5 @@ tests/
 - [x] Design spec
 - [x] Implementation plan
 - [x] MVP: auth, activities, subtasks, responsive UI
-- [ ] Deploy to focus.etretyakov.ru
+- [x] Deploy to focus.etretyakov.ru
 - [ ] Phase 2: drag-and-drop, archive, PWA
