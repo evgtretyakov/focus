@@ -94,7 +94,8 @@ openssl rand -base64 24   # DB_PASSWORD
 git clone <repo-url> /opt/focus
 cd /opt/focus
 cp .env.example .env
-# заполнить .env production-значениями
+# заполнить .env production-значениями:
+# DB_PASSWORD, SESSION_SECRET, OWNER_PASSWORD_HASH
 
 docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml exec app npx prisma migrate deploy
@@ -130,6 +131,6 @@ tests/
 
 - [x] Design spec
 - [x] Implementation plan
-- [ ] MVP: auth, activities, subtasks, responsive UI
+- [x] MVP: auth, activities, subtasks, responsive UI
 - [ ] Deploy to focus.etretyakov.ru
 - [ ] Phase 2: drag-and-drop, archive, PWA
