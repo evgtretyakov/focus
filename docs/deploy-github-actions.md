@@ -14,6 +14,8 @@
 
 Ключ должен быть добавлен в `~/.ssh/authorized_keys` на сервере.
 
+**Все три секрета обязательны.** Если `DEPLOY_USER` пустой, deploy упадёт с `DEPLOY_HOST and DEPLOY_USER must be set`.
+
 Через CLI (если есть права):
 
 ```bash
