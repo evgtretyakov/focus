@@ -2,7 +2,11 @@
 
 import { ConfigProvider, theme } from "antd";
 import ruRU from "antd/locale/ru_RU";
+import dayjs from "dayjs";
+import "dayjs/locale/ru";
 import { useEffect, useState } from "react";
+
+dayjs.locale("ru");
 
 export function AntdProvider({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(false);
