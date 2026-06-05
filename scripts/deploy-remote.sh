@@ -71,6 +71,7 @@ if [[ ! -f /etc/nginx/sites-available/focus.etretyakov.ru ]]; then
 fi
 
 mkdir -p ${REMOTE_DIR}/backups
+git rev-parse HEAD
 REMOTE
 
 echo "==> Done. https://focus.etretyakov.ru/login"
