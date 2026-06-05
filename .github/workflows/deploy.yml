@@ -1,0 +1,57 @@
+name: Deploy production
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: bash scripts/deploy-remote.sh
+
+      - name: Verify commit on server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          EXPECTED="${{ github.event.workflow_run.head_sha || github.sha }}"
+          REMOTE_SHA=$(ssh -o StrictHostKeyChecking=accept-new -i ~/.ssh/deploy_key \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" "cd /opt/focus && git rev-parse HEAD")
+          echo "Expected: $EXPECTED"
+          echo "On server: $REMOTE_SHA"
+          test "$REMOTE_SHA" = "$EXPECTED"
+
+      - name: Verify HTTPS
+        run: |
+          for attempt in $(seq 1 20); do
+            if curl -fsS "https://focus.etretyakov.ru/login" -o /dev/null; then
+              echo "Site is up (attempt $attempt)"
+              exit 0
+            fi
+            echo "Waiting for app rebuild... ($attempt/20)"
+            sleep 15
+          done
+          echo "Site did not respond in time" >&2
+          exit 1

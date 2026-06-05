@@ -76,6 +76,13 @@ npm run test:e2e             # e2e smoke (Playwright)
 
 ## Деплой (production)
 
+### Автодеплой (GitHub Actions)
+
+После merge в `main`: CI → при успехе **Deploy production** (SSH + `docker compose` на VPS).
+
+Один раз добавьте секреты репозитория: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`.  
+Инструкция: [docs/deploy-github-actions.md](docs/deploy-github-actions.md).
+
 ### 1. DNS
 
 A-запись: `focus.etretyakov.ru` → IP вашего VPS.

@@ -17,6 +17,7 @@
 3. PR **смержен** в `main` (`gh pr merge` или GitHub UI)
 4. Feature-ветка удалена на remote (если больше не нужна)
 5. Нет незакоммиченных изменений
+6. **Production обновлён:** после merge в `main` жди успешного workflow **Deploy production** (GitHub Actions) или запусти `bash scripts/deploy-remote.sh`. Проверь: commit на сервере = `main`, `curl -fsS https://focus.etretyakov.ru/login` → 200
 
 Исключение: пользователь явно просит оставить PR открытым, или merge заблокирован (падающий CI, конфликт, нет прав) — тогда напиши причину и что осталось сделать.
 
@@ -149,7 +150,12 @@ nginx -t && systemctl reload nginx
 
 Секреты генерируй сам (`openssl rand`, `npm run hash-password`). Не коммить `.env` и пароли в репозиторий.
 
-Деплой с ветки `main` после merge PR. Подробности — в [README.md](README.md).
+Деплой с ветки `main` после merge PR:
+
+- **Автоматически:** GitHub Actions (`.github/workflows/deploy.yml`) после зелёного CI на `main`. Секреты: `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` — см. [docs/deploy-github-actions.md](docs/deploy-github-actions.md).
+- **Вручную:** `bash scripts/deploy-remote.sh` или SSH-команды ниже.
+
+Подробности — в [README.md](README.md) и [docs/deploy-github-actions.md](docs/deploy-github-actions.md).
 
 ## Документация
 
