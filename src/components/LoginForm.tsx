@@ -2,19 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Alert, Button, Form, Input, Typography } from "antd";
 
 export function LoginForm() {
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(values: { password: string }) {
     setError("");
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password: values.password }),
     });
     if (res.ok) {
       router.push("/activities");
@@ -25,20 +24,30 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm">
-      <h1 className="text-2xl font-bold">Focus</h1>
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Пароль"
-        className="border rounded px-3 py-2"
-        autoFocus
-      />
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-      <button type="submit" className="bg-black text-white rounded px-4 py-2">
-        Войти
-      </button>
-    </form>
+    <Form
+      onFinish={handleSubmit}
+      layout="vertical"
+      style={{ width: "100%", maxWidth: 360 }}
+    >
+      <Typography.Title level={2} style={{ marginTop: 0 }}>
+        Focus
+      </Typography.Title>
+      <Form.Item
+        name="password"
+        rules={[{ required: true, message: "Введите пароль" }]}
+      >
+        <Input.Password placeholder="Пароль" autoFocus />
+      </Form.Item>
+      {error && (
+        <Form.Item>
+          <Alert type="error" message={error} showIcon />
+        </Form.Item>
+      )}
+      <Form.Item>
+        <Button type="primary" htmlType="submit" block>
+          Войти
+        </Button>
+      </Form.Item>
+    </Form>
   );
 }

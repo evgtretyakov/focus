@@ -2,9 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Button, Layout, Spin, Typography } from "antd";
 import { ActivityTable } from "@/components/ActivityTable";
 import { NewActivityForm } from "@/components/NewActivityForm";
 import { Priority } from "@prisma/client";
+
+const { Content } = Layout;
 
 type Activity = {
   id: string;
@@ -42,31 +45,26 @@ export default function ActivitiesPage() {
     router.refresh();
   }
 
-  if (loading) {
-    return (
-      <main className="min-h-screen p-4 md:p-8">
-        <p className="text-gray-500">Загрузка...</p>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen p-4 md:p-8 max-w-5xl mx-auto">
-      <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Focus</h1>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          Выйти
-        </button>
-      </header>
+    <Layout style={{ minHeight: "100vh" }}>
+      <Content style={{ padding: "16px 32px", maxWidth: 1024, margin: "0 auto", width: "100%" }}>
+        <Spin spinning={loading}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+            <Typography.Title level={2} style={{ margin: 0 }}>
+              Focus
+            </Typography.Title>
+            <Button type="link" onClick={handleLogout}>
+              Выйти
+            </Button>
+          </div>
 
-      <div className="mb-6">
-        <NewActivityForm onCreated={loadActivities} />
-      </div>
+          <div style={{ marginBottom: 24 }}>
+            <NewActivityForm onCreated={loadActivities} />
+          </div>
 
-      <ActivityTable activities={activities} onUpdate={loadActivities} />
-    </main>
+          {!loading && <ActivityTable activities={activities} onUpdate={loadActivities} />}
+        </Spin>
+      </Content>
+    </Layout>
   );
 }
