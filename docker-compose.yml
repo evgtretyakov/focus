@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: focus
+      POSTGRES_PASSWORD: focus
+      POSTGRES_DB: focus
+    ports:
+      - "5432:5432"
+    volumes:
+      - focus_pg_data:/var/lib/postgresql/data
+
+volumes:
+  focus_pg_data:
