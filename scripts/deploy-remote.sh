@@ -18,10 +18,10 @@ if [[ ! -f "$SSH_KEY" ]]; then
   python3 - <<'PY'
 import os, re, textwrap
 key = os.environ['DEPLOY_SSH_KEY'].strip()
-m = re.search(r'-----BEGIN OPENSSH PRIVATE KEY-----\s*(.+?)\s*-----END OPENSSH PRIVATE KEY-----', key)
+m = re.search(r'-----BEGIN OPENSSH PRIVATE KEY-----\s*(.+?)\s*-----END OPENSSH PRIVATE KEY-----', key, re.DOTALL)
 if not m:
     raise SystemExit('Invalid DEPLOY_SSH_KEY format')
-body = m.group(1).replace(' ', '')
+body = m.group(1).replace(' ', '').replace('\n', '')
 wrapped = '\n'.join(textwrap.wrap(body, 70))
 path = os.path.expanduser('~/.ssh/deploy_key')
 os.makedirs(os.path.dirname(path), exist_ok=True)
