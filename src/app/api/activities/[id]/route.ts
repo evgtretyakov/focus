@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { Priority } from "@prisma/client";
+import { ActivityStatus, Priority } from "@prisma/client";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -18,8 +18,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (body.deadline !== undefined) {
     data.deadline = body.deadline ? new Date(body.deadline) : null;
   }
+  if (body.status !== undefined) {
+    data.status = body.status as ActivityStatus;
+    if (body.status === ActivityStatus.COMPLETED) {
+      data.completedAt = new Date();
+    } else if (body.status === ActivityStatus.IN_PROGRESS) {
+      data.completedAt = null;
+    }
+  }
   if (body.completedAt !== undefined) {
     data.completedAt = body.completedAt ? new Date(body.completedAt) : null;
+    data.status = body.completedAt
+      ? ActivityStatus.COMPLETED
+      : ActivityStatus.IN_PROGRESS;
   }
 
   const activity = await prisma.activity.update({

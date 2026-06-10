@@ -9,9 +9,12 @@ export async function GET() {
   if ("error" in auth) return auth.error;
 
   const activities = await prisma.activity.findMany({
-    where: { completedAt: null },
     include: { subtasks: { orderBy: { sortOrder: "asc" } } },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    orderBy: [
+      { status: "asc" },
+      { sortOrder: "asc" },
+      { createdAt: "desc" },
+    ],
   });
   return NextResponse.json(activities);
 }
