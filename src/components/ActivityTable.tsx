@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Priority } from "@prisma/client";
+import { ActivityStatus, Priority } from "@prisma/client";
 import {
   Button,
   Collapse,
@@ -15,6 +15,7 @@ import {
 } from "antd";
 import type { TableColumnsType } from "antd";
 import { DeleteOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
+import { ActivityStatusDot } from "./ActivityStatusDot";
 import { PriorityBadge } from "./PriorityBadge";
 import { SubtaskList } from "./SubtaskList";
 
@@ -22,6 +23,7 @@ type Activity = {
   id: string;
   title: string;
   priority: Priority;
+  status: ActivityStatus;
   deadline: string | null;
   createdAt: string;
   subtasks: { id: string; title: string; completed: boolean; sortOrder: number }[];
@@ -35,19 +37,25 @@ const priorityOrder: Record<Priority, number> = {
   LOW: 2,
 };
 
+function compareBySortKey(a: Activity, b: Activity, sortBy: SortKey): number {
+  if (sortBy === "priority") {
+    return priorityOrder[a.priority] - priorityOrder[b.priority];
+  }
+  if (sortBy === "deadline") {
+    if (!a.deadline && !b.deadline) return 0;
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+  }
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+}
+
 function sortActivities(activities: Activity[], sortBy: SortKey): Activity[] {
-  return [...activities].sort((a, b) => {
-    if (sortBy === "priority") {
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    }
-    if (sortBy === "deadline") {
-      if (!a.deadline && !b.deadline) return 0;
-      if (!a.deadline) return 1;
-      if (!b.deadline) return -1;
-      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-    }
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  const inProgress = activities.filter((a) => a.status === ActivityStatus.IN_PROGRESS);
+  const completed = activities.filter((a) => a.status === ActivityStatus.COMPLETED);
+  const sortGroup = (group: Activity[]) =>
+    [...group].sort((a, b) => compareBySortKey(a, b, sortBy));
+  return [...sortGroup(inProgress), ...sortGroup(completed)];
 }
 
 function formatDeadline(deadline: string | null) {
@@ -80,6 +88,12 @@ export function ActivityTable({
   }
 
   const columns: TableColumnsType<Activity> = [
+    {
+      key: "status",
+      width: 36,
+      align: "center",
+      render: (_, record) => <ActivityStatusDot status={record.status} />,
+    },
     {
       title: "Название",
       dataIndex: "title",
@@ -195,7 +209,10 @@ export function ActivityTable({
             key: activity.id,
             label: (
               <Space direction="vertical" size={0} style={{ width: "100%" }}>
-                <Typography.Text strong>{activity.title}</Typography.Text>
+                <Space>
+                  <ActivityStatusDot status={activity.status} />
+                  <Typography.Text strong>{activity.title}</Typography.Text>
+                </Space>
                 <Space>
                   <PriorityBadge priority={activity.priority} />
                   <Typography.Text

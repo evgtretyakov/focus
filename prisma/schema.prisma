@@ -13,18 +13,25 @@ enum Priority {
   LOW
 }
 
+enum ActivityStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
 model Activity {
-  id          String    @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
-  priority    Priority  @default(MEDIUM)
+  priority    Priority       @default(MEDIUM)
+  status      ActivityStatus @default(IN_PROGRESS)
   deadline    DateTime?
-  sortOrder   Int       @default(0)
+  sortOrder   Int            @default(0)
   completedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   subtasks    Subtask[]
 
   @@index([sortOrder])
+  @@index([status])
   @@index([completedAt])
 }
 

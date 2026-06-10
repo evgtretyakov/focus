@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Layout, Spin, Typography } from "antd";
 import { ActivityTable } from "@/components/ActivityTable";
 import { NewActivityForm } from "@/components/NewActivityForm";
-import { Priority } from "@prisma/client";
+import { ActivityStatus, Priority } from "@prisma/client";
 
 const { Content } = Layout;
 
@@ -13,6 +13,7 @@ type Activity = {
   id: string;
   title: string;
   priority: Priority;
+  status: ActivityStatus;
   deadline: string | null;
   createdAt: string;
   subtasks: { id: string; title: string; completed: boolean; sortOrder: number }[];

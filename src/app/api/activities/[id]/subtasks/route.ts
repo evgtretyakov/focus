@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { syncActivityStatusFromSubtasks } from "@/lib/activity-status";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -26,5 +27,6 @@ export async function POST(req: NextRequest, { params }: Params) {
       sortOrder: (maxOrder._max.sortOrder ?? 0) + 1,
     },
   });
+  await syncActivityStatusFromSubtasks(activityId);
   return NextResponse.json(subtask, { status: 201 });
 }
