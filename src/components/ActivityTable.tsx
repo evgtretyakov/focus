@@ -43,7 +43,21 @@ const priorityOrder: Record<Priority, number> = {
 
 function compareBySortKey(a: Activity, b: Activity, sortBy: SortKey): number {
   if (sortBy === "priority") {
-    return priorityOrder[a.priority] - priorityOrder[b.priority];
+    const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+    if (priorityDiff !== 0) return priorityDiff;
+
+    // Tie-breaker: priority -> deadline (null last), then createdAt
+    if (!a.deadline && !b.deadline) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+
+    const deadlineDiff =
+      new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+    if (deadlineDiff !== 0) return deadlineDiff;
+
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   }
   if (sortBy === "deadline") {
     if (!a.deadline && !b.deadline) return 0;
