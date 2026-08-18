@@ -149,12 +149,14 @@ export function EditablePriority({
         value={value}
         options={priorityOptions}
         style={{ minWidth: 120 }}
-        onOpenChange={setOpen}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) void save();
+        }}
         onChange={(next) => {
           setValue(next);
           void save(next);
         }}
-        onBlur={() => void save()}
         onClick={stopRowToggle}
         onKeyDown={(e) => e.stopPropagation()}
       />
@@ -220,12 +222,14 @@ export function EditableDeadline({
         value={value}
         format="DD.MM.YYYY"
         allowClear
-        onOpenChange={setOpen}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) void save();
+        }}
         onChange={(next) => {
           setValue(next);
           void save(next);
         }}
-        onBlur={() => void save()}
         onClick={stopRowToggle}
         onKeyDown={(e) => e.stopPropagation()}
       />
