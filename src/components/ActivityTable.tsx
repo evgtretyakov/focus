@@ -16,7 +16,11 @@ import {
 import type { TableColumnsType } from "antd";
 import { DeleteOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
 import { ActivityStatusDot } from "./ActivityStatusDot";
-import { PriorityBadge } from "./PriorityBadge";
+import {
+  EditableDeadline,
+  EditablePriority,
+  EditableTitle,
+} from "./EditableActivityFields";
 import { SubtaskList } from "./SubtaskList";
 
 type Activity = {
@@ -58,17 +62,6 @@ function sortActivities(activities: Activity[], sortBy: SortKey): Activity[] {
   return [...sortGroup(inProgress), ...sortGroup(completed)];
 }
 
-function formatDeadline(deadline: string | null) {
-  if (!deadline) return "—";
-  const date = new Date(deadline);
-  return date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
-}
-
-function isOverdue(deadline: string | null) {
-  if (!deadline) return false;
-  return new Date(deadline) < new Date();
-}
-
 export function ActivityTable({
   activities,
   onUpdate,
@@ -98,24 +91,34 @@ export function ActivityTable({
       title: "Название",
       dataIndex: "title",
       key: "title",
-      render: (title: string) => <Typography.Text strong>{title}</Typography.Text>,
+      render: (title: string, record) => (
+        <EditableTitle activityId={record.id} title={title} onUpdate={onUpdate} />
+      ),
     },
     {
       title: "Приоритет",
       dataIndex: "priority",
       key: "priority",
       width: 140,
-      render: (priority: Priority) => <PriorityBadge priority={priority} />,
+      render: (priority: Priority, record) => (
+        <EditablePriority
+          activityId={record.id}
+          priority={priority}
+          onUpdate={onUpdate}
+        />
+      ),
     },
     {
       title: "Дедлайн",
       dataIndex: "deadline",
       key: "deadline",
       width: 120,
-      render: (deadline: string | null) => (
-        <Typography.Text type={isOverdue(deadline) ? "danger" : "secondary"}>
-          {formatDeadline(deadline)}
-        </Typography.Text>
+      render: (deadline: string | null, record) => (
+        <EditableDeadline
+          activityId={record.id}
+          deadline={deadline}
+          onUpdate={onUpdate}
+        />
       ),
     },
     {
@@ -211,16 +214,24 @@ export function ActivityTable({
               <Space direction="vertical" size={0} style={{ width: "100%" }}>
                 <Space>
                   <ActivityStatusDot status={activity.status} />
-                  <Typography.Text strong>{activity.title}</Typography.Text>
+                  <EditableTitle
+                    activityId={activity.id}
+                    title={activity.title}
+                    onUpdate={onUpdate}
+                  />
                 </Space>
                 <Space>
-                  <PriorityBadge priority={activity.priority} />
-                  <Typography.Text
-                    type={isOverdue(activity.deadline) ? "danger" : "secondary"}
-                    style={{ fontSize: 12 }}
-                  >
-                    {formatDeadline(activity.deadline)}
-                  </Typography.Text>
+                  <EditablePriority
+                    activityId={activity.id}
+                    priority={activity.priority}
+                    onUpdate={onUpdate}
+                  />
+                  <EditableDeadline
+                    activityId={activity.id}
+                    deadline={activity.deadline}
+                    onUpdate={onUpdate}
+                    fontSize={12}
+                  />
                 </Space>
               </Space>
             ),
