@@ -117,11 +117,14 @@ Caddy автоматически получит TLS-сертификат для 
 
 ### 4. Бэкап (рекомендуется)
 
+`scripts/deploy-remote.sh` сам ставит cron (03:00) на `scripts/backup.sh`. Скрипт пишет дамп во временный файл и сохраняет его, только если дамп полный; ошибки и предупреждение о заполнении диска (≥90%) пишутся в `/opt/focus/backups/backup.log`.
+
 ```bash
-mkdir -p /opt/focus/backups
-# crontab -e:
-0 3 * * * docker compose -f /opt/focus/docker-compose.prod.yml exec -T db pg_dump -U focus focus > /opt/focus/backups/focus-$(date +\%Y\%m\%d).sql
+# Вручную:
+bash /opt/focus/scripts/backup.sh
 ```
+
+Деплой после сборки удаляет образы без тегов (`docker image prune -f`), чтобы диск не заполнялся.
 
 ## Структура проекта
 
