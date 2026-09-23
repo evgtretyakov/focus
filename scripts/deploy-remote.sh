@@ -76,7 +76,10 @@ fi
 
 mkdir -p ${REMOTE_DIR}/backups
 CRON_LINE="0 3 * * * bash ${REMOTE_DIR}/scripts/backup.sh >> ${REMOTE_DIR}/backups/backup.log 2>&1"
-( crontab -l 2>/dev/null | grep -v '${REMOTE_DIR}/backups/' ; echo "\$CRON_LINE" ) | crontab -
+# grep -v exits 1 when nothing is left; under pipefail that must not abort before the echo.
+OTHER_JOBS=\$(crontab -l 2>/dev/null | grep -vF '${REMOTE_DIR}/backups/' || true)
+printf '%s\\n' "\$OTHER_JOBS" "\$CRON_LINE" | grep -v '^\$' | crontab -
+crontab -l | grep -qF "\$CRON_LINE"
 df -h /
 git rev-parse HEAD
 REMOTE
