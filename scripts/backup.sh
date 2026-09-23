@@ -14,7 +14,7 @@ mkdir -p "$BACKUP_DIR"
 trap 'rm -f "$TMP"' EXIT
 
 cd "$REMOTE_DIR"
-if ! docker compose -f "$COMPOSE_FILE" exec -T db pg_dump -U focus focus > "$TMP"; then
+if ! docker compose -f "$COMPOSE_FILE" exec -T db pg_dump -U focus focus < /dev/null > "$TMP"; then
   echo "$(date -Is) ERROR: pg_dump failed" >&2
   exit 1
 fi
