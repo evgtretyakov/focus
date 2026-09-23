@@ -59,6 +59,10 @@ fi
 
 docker compose -f ${COMPOSE_FILE} up -d --build
 
+# Each --build leaves the previous image untagged; a full disk once took the DB down.
+docker image prune -f
+docker builder prune -f --filter until=168h
+
 LATEST=\$(ls -1 prisma/migrations | grep -E '^[0-9]' | sort | tail -1)
 docker compose -f ${COMPOSE_FILE} exec -T db psql -U focus -d focus \
   < "prisma/migrations/\${LATEST}/migration.sql" 2>/dev/null || true
@@ -71,6 +75,9 @@ if [[ ! -f /etc/nginx/sites-available/focus.etretyakov.ru ]]; then
 fi
 
 mkdir -p ${REMOTE_DIR}/backups
+CRON_LINE="0 3 * * * bash ${REMOTE_DIR}/scripts/backup.sh >> ${REMOTE_DIR}/backups/backup.log 2>&1"
+( crontab -l 2>/dev/null | grep -v '${REMOTE_DIR}/backups/' ; echo "\$CRON_LINE" ) | crontab -
+df -h /
 git rev-parse HEAD
 REMOTE
 
